@@ -1,95 +1,82 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useState, useEffect, useRef } from 'react';
+import styles from './page.module.css';
 
 export default function Home() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const chatEndRef = useRef(null); // Reference for scrolling to the bottom
+
+  const colors = {
+    user: ['#ff4d6d', '#ff758f'],
+    ai: ['#85acb1', '#2f7f8e']
+  };
+
+  const getRandomColor = (type, index) => {
+    const [color1, color2] = colors[type];
+    const ratio = (index + 1) / messages.length;
+    return `linear-gradient(to right, ${color1} 0%, ${color2} ${ratio * 100}%)`;
+  };
+
+  const getAIResponse = (userInput) => {
+    const lowercasedInput = userInput.toLowerCase().trim();
+    const predefinedResponses = {
+      'hi': 'Hi! How can I help you today?',
+      'what classes do you offer?': 'We offer various classes including Ballet, Jazz, Hip-Hop, and Contemporary.',
+      'what are the class timings?': 'Class timings vary. Please check our schedule on the website.',
+      'how much are the fees?': 'Our fees depend on the class type. Visit our pricing page for details.',
+      'where is the dance school located?': 'We are located at 123 Dance Street, Cityville.',
+      'how can i enroll?': 'Fill out the enrollment form on our website or contact us.',
+      'do you offer private lessons?': 'Yes, we offer private lessons. Contact us to schedule.'
+    };
+    return predefinedResponses[lowercasedInput] || "Sorry, I don't have an answer for that.";
+  };
+
+  const sendMessage = async () => {
+    if (input.trim() === '') return;
+
+    const newMessages = [...messages, { text: input, sender: 'user' }];
+    setMessages(newMessages);
+    setInput('');
+
+    // Scroll to the bottom
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    // Get AI response
+    setTimeout(() => {
+      const aiResponse = { text: getAIResponse(input), sender: 'ai' };
+      setMessages([...newMessages, aiResponse]);
+      // Scroll to the bottom
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 1000);
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className={styles.chatContainer}>
+      <h1 className={styles.heading}>Dance School Chatbot</h1>
+      <div className={styles.chatBox}>
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={msg.sender === 'user' ? styles.userMessage : styles.aiMessage}
+            style={{ background: getRandomColor(msg.sender, index) }}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+            {msg.text}
+          </div>
+        ))}
+        <div ref={chatEndRef} /> {/* Empty div to use for scrolling */}
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <div className={styles.inputContainer}>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your message..."
+          className={styles.input}
         />
+        <button onClick={sendMessage} className={styles.sendButton}>Send</button>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
